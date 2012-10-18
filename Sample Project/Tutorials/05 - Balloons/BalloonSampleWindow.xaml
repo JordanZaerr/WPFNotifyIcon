@@ -11,7 +11,8 @@
     <tb:TaskbarIcon
       x:Name="MyNotifyIcon"
       IconSource="/Icons/Error.ico"
-      ToolTipText="Balloon Sample Icon" />
+      ToolTipText="Balloon Sample Icon"
+      RepositionBalloonsOnClose="true"/>
     <Button
       x:Name="btnShowStandardBalloon"
       Click="btnShowStandardBalloon_Click"

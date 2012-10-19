@@ -240,19 +240,12 @@ namespace Hardcodet.Wpf.TaskbarNotification
             popup.IsOpen = true;
         }
 
-        private void PositionPopup(Popup popup, bool withAnimation = false)
+        private double PositionPopup(Popup popup, double? previousOffset = null, bool withAnimation = false)
         {
             Point position = TrayInfo.GetTrayLocation();
             var elementHeight = ((FrameworkElement)popup.Child).Height;
             double newHorizontalOffset = position.X - 1;
             double newVerticalOffset;
-
-            if (withAnimation)
-            {
-                newVerticalOffset = popup.VerticalOffset + elementHeight;
-                MoveWithAnimation(popup, newVerticalOffset);
-                return;
-            }
 
             if (CustomBalloons.Any())
             {
@@ -264,8 +257,19 @@ namespace Hardcodet.Wpf.TaskbarNotification
                 newVerticalOffset = position.Y - 1 - elementHeight;
             }
 
+            if (withAnimation)
+            {
+                if (previousOffset != null)
+                {
+                    newVerticalOffset = previousOffset.Value - elementHeight; 
+                }
+                MoveWithAnimation(popup, newVerticalOffset);
+                return newVerticalOffset;
+            }
+
             popup.HorizontalOffset = newHorizontalOffset;
             popup.VerticalOffset = newVerticalOffset;
+            return newVerticalOffset;
         }
 
         private void MoveWithAnimation(Popup popup, double newVertical)
@@ -351,9 +355,10 @@ namespace Hardcodet.Wpf.TaskbarNotification
                         {
                             var copy = new List<CustomBalloonInfo>(CustomBalloons);
                             CustomBalloons.Clear();
+                            double? previousOffset = null;
                             foreach (var copiedInfo in copy)
                             {
-                                PositionPopup(copiedInfo.Popup, true);
+                                previousOffset = PositionPopup(copiedInfo.Popup, previousOffset, true);
                                 CustomBalloons.Add(copiedInfo);
                             }
                         }

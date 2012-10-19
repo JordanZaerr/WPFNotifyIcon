@@ -29,7 +29,7 @@ namespace Samples.Tutorials.Balloons
             balloon.BalloonText = "Custom Balloon";
 
             //show balloon and close it after 4 seconds
-            MyNotifyIcon.ShowCustomBalloon(new Random().Next(), balloon, PopupAnimation.None, 4000);
+            MyNotifyIcon.ShowCustomBalloon(new Random().Next(), balloon, PopupAnimation.None, 10000);
         }
 
         private void btnHideStandardBalloon_Click(object sender, RoutedEventArgs e)

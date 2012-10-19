@@ -34,6 +34,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Interop;
+using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using Hardcodet.Wpf.TaskbarNotification.Interop;
 using Point = Hardcodet.Wpf.TaskbarNotification.Interop.Point;
@@ -211,12 +213,11 @@ namespace Hardcodet.Wpf.TaskbarNotification
             popup.Placement = PlacementMode.AbsolutePoint;
             popup.StaysOpen = true;
 
-            PositionPopup(popup);
-
-
             //store reference
             lock (this)
             {
+                PositionPopup(popup);
+
                 var info = new CustomBalloonInfo
                 {
                     Key = key,
@@ -239,25 +240,41 @@ namespace Hardcodet.Wpf.TaskbarNotification
             popup.IsOpen = true;
         }
 
-        private void PositionPopup(Popup popup)
+        private void PositionPopup(Popup popup, bool withAnimation = false)
         {
             Point position = TrayInfo.GetTrayLocation();
+            var elementHeight = ((FrameworkElement)popup.Child).Height;
+            double newHorizontalOffset = position.X - 1;
+            double newVerticalOffset;
+
+            if (withAnimation)
+            {
+                newVerticalOffset = popup.VerticalOffset + elementHeight;
+                MoveWithAnimation(popup, newVerticalOffset);
+                return;
+            }
+
             if (CustomBalloons.Any())
             {
                 var minVertOffset = CustomBalloons.Min(x => x.Popup.VerticalOffset);
-                var elementHeight = ((FrameworkElement)popup.Child).Height;
-                popup.HorizontalOffset = position.X - 1;
-                popup.VerticalOffset = minVertOffset - elementHeight;
-                if (CustomBalloons.Count == 1)
-                {
-                    popup.VerticalOffset -= elementHeight;
-                }
+                newVerticalOffset = minVertOffset - elementHeight;
             }
             else
             {
-                popup.HorizontalOffset = position.X - 1;
-                popup.VerticalOffset = position.Y - 1;
+                newVerticalOffset = position.Y - 1 - elementHeight;
             }
+
+            popup.HorizontalOffset = newHorizontalOffset;
+            popup.VerticalOffset = newVerticalOffset;
+        }
+
+        private void MoveWithAnimation(Popup popup, double newVertical)
+        {
+            var storyBoard = new Storyboard();
+            storyBoard.SetValue(Storyboard.TargetProperty, popup);
+            storyBoard.SetValue(Storyboard.TargetPropertyProperty, new PropertyPath("VerticalOffset"));
+            storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.5)));
+            storyBoard.Begin();
         }
 
         /// <summary>
@@ -336,7 +353,7 @@ namespace Hardcodet.Wpf.TaskbarNotification
                             CustomBalloons.Clear();
                             foreach (var copiedInfo in copy)
                             {
-                                PositionPopup(copiedInfo.Popup);
+                                PositionPopup(copiedInfo.Popup, true);
                                 CustomBalloons.Add(copiedInfo);
                             }
                         }

@@ -273,7 +273,7 @@ namespace Hardcodet.Wpf.TaskbarNotification
             var storyBoard = new Storyboard();
             storyBoard.SetValue(Storyboard.TargetProperty, popup);
             storyBoard.SetValue(Storyboard.TargetPropertyProperty, new PropertyPath("VerticalOffset"));
-            storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.5)));
+            storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.25)));
             storyBoard.Begin();
         }
 

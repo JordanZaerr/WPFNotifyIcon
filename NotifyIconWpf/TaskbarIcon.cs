@@ -243,25 +243,48 @@ namespace Hardcodet.Wpf.TaskbarNotification
         private double PositionPopup(Popup popup, double? previousOffset = null, bool withAnimation = false)
         {
             Point position = TrayInfo.GetTrayLocation();
+            bool taskbarOnTop = position.Y < 100;
             var elementHeight = ((FrameworkElement)popup.Child).Height;
             double newHorizontalOffset = position.X - 1;
             double newVerticalOffset;
 
             if (CustomBalloons.Any())
             {
-                var minVertOffset = CustomBalloons.Min(x => x.Popup.VerticalOffset);
-                newVerticalOffset = minVertOffset - elementHeight;
+                if (taskbarOnTop)
+                {
+                    var maxVertOffset = CustomBalloons.Max(x => x.Popup.VerticalOffset);
+                    newVerticalOffset = maxVertOffset + elementHeight;
+                }
+                else
+                {
+                    var minVertOffset = CustomBalloons.Min(x => x.Popup.VerticalOffset);
+                    newVerticalOffset = minVertOffset - elementHeight;
+                }
             }
             else
             {
-                newVerticalOffset = position.Y - 1 - elementHeight;
+                if (taskbarOnTop)
+                {
+                    newVerticalOffset = position.Y;
+                }
+                else
+                {
+                    newVerticalOffset = position.Y - 1 - elementHeight;
+                }
             }
 
             if (withAnimation)
             {
                 if (previousOffset != null)
                 {
-                    newVerticalOffset = previousOffset.Value - elementHeight; 
+                    if (taskbarOnTop)
+                    {
+                        newVerticalOffset = previousOffset.Value + elementHeight;
+                    }
+                    else
+                    {
+                        newVerticalOffset = previousOffset.Value - elementHeight;
+                    }
                 }
                 MoveWithAnimation(popup, newVerticalOffset);
                 return newVerticalOffset;

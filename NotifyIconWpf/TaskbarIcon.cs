@@ -299,6 +299,7 @@ namespace Hardcodet.Wpf.TaskbarNotification
         private void MoveWithAnimation(Popup popup, double newVertical)
         {
             var storyBoard = new Storyboard();
+            var bleh = storyBoard.IsFrozen;
             storyBoard.SetValue(Storyboard.TargetProperty, popup);
             storyBoard.SetValue(Storyboard.TargetPropertyProperty, new PropertyPath("VerticalOffset"));
             storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.25)));
@@ -309,7 +310,10 @@ namespace Hardcodet.Wpf.TaskbarNotification
         private void OnStoryBoardCompleted(object sender, EventArgs e)
         {
             var clockGroup = (ClockGroup)sender;
-            clockGroup.Timeline.Completed -= OnStoryBoardCompleted;
+            if (!clockGroup.Timeline.IsFrozen)
+            {
+                clockGroup.Timeline.Completed -= OnStoryBoardCompleted;
+            }
             var popup = (Popup)Storyboard.GetTarget(clockGroup.Timeline);
             lock (this)
             {

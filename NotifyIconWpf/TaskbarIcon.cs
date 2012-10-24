@@ -195,6 +195,7 @@ namespace Hardcodet.Wpf.TaskbarNotification
 
             //create an invisible popup that hosts the UIElement
             var popup = new Popup();
+            popup.Tag = key;
             popup.AllowsTransparency = true;
 
             //provide the popup with the taskbar icon's data context
@@ -301,7 +302,23 @@ namespace Hardcodet.Wpf.TaskbarNotification
             storyBoard.SetValue(Storyboard.TargetProperty, popup);
             storyBoard.SetValue(Storyboard.TargetPropertyProperty, new PropertyPath("VerticalOffset"));
             storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.25)));
+            storyBoard.Completed += OnStoryBoardCompleted;
             storyBoard.Begin();
+        }
+
+        private void OnStoryBoardCompleted(object sender, EventArgs e)
+        {
+            var clockGroup = (ClockGroup)sender;
+            clockGroup.Timeline.Completed -= OnStoryBoardCompleted;
+            var popup = (Popup)Storyboard.GetTarget(clockGroup.Timeline);
+            lock (this)
+            {
+                var info = CustomBalloons.FirstOrDefault(x => x.Key.Equals(popup.Tag));
+                if (info == null)
+                {
+                    popup.IsOpen = false;
+                }
+            }
         }
 
         /// <summary>

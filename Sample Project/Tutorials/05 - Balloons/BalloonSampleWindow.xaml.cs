@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls.Primitives;
 
@@ -14,6 +15,9 @@ namespace Samples.Tutorials.Balloons
             InitializeComponent();
         }
 
+        private readonly Queue<int> _balloonIds = new Queue<int>();
+        private readonly Random _idGenerator = new Random();
+
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             //clean up notifyicon (would otherwise stay open until application finishes)
@@ -22,14 +26,15 @@ namespace Samples.Tutorials.Balloons
             base.OnClosing(e);
         }
 
-
         private void btnShowCustomBalloon_Click(object sender, RoutedEventArgs e)
         {
-            FancyBalloon balloon = new FancyBalloon(new Random().Next());
+            var id = _idGenerator.Next();
+            _balloonIds.Enqueue(id);
+            var balloon = new FancyBalloon(id);
             balloon.BalloonText = "Custom Balloon";
 
-            //show balloon and close it after 4 seconds
-            MyNotifyIcon.ShowCustomBalloon(new Random().Next(), balloon, PopupAnimation.None, 10000);
+            //show balloon and close it after 5 seconds
+            MyNotifyIcon.ShowCustomBalloon(id, balloon, PopupAnimation.None, 5000);
         }
 
         private void btnHideStandardBalloon_Click(object sender, RoutedEventArgs e)
@@ -48,9 +53,10 @@ namespace Samples.Tutorials.Balloons
 
         private void btnCloseCustomBalloon_Click(object sender, RoutedEventArgs e)
         {
-            MyNotifyIcon.CloseBalloon(null);
+            if (_balloonIds.Count > 0)
+            {
+                MyNotifyIcon.CloseBalloon(_balloonIds.Dequeue());
+            }
         }
-
-
     }
 }

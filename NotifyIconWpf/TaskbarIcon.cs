@@ -187,12 +187,6 @@ namespace Hardcodet.Wpf.TaskbarNotification
 
             EnsureNotDisposed();
 
-            //make sure we don't have an open balloon
-            //lock (this)
-            //{
-            //  CloseBalloon();
-            //}
-
             //create an invisible popup that hosts the UIElement
             var popup = new Popup();
             popup.Tag = key;
@@ -244,33 +238,47 @@ namespace Hardcodet.Wpf.TaskbarNotification
         private double PositionPopup(Popup popup, double? previousOffset = null, bool withAnimation = false)
         {
             Point position = TrayInfo.GetTrayLocation();
-            bool taskbarOnTop = position.Y < 100;
-            var elementHeight = ((FrameworkElement)popup.Child).Height;
-            double newHorizontalOffset = position.X - 1;
-            double newVerticalOffset;
+            var element = ((FrameworkElement)popup.Child);
+            var elementHeight = element.Height;
+            var elementWidth = element.Width + 5;
+            double newHorizontalOffset = position.X - elementWidth;
+            double newVerticalOffset = 0;
 
+            var taskbarPosition = Taskbar.GetPosition();
             if (CustomBalloons.Any())
             {
-                if (taskbarOnTop)
+                switch (taskbarPosition)
                 {
-                    var maxVertOffset = CustomBalloons.Max(x => x.Popup.VerticalOffset);
-                    newVerticalOffset = maxVertOffset + elementHeight;
-                }
-                else
-                {
-                    var minVertOffset = CustomBalloons.Min(x => x.Popup.VerticalOffset);
-                    newVerticalOffset = minVertOffset - elementHeight;
+                    case TaskbarPosition.Top:
+                        var maxVertOffset = CustomBalloons.Max(x => x.Popup.VerticalOffset);
+                        newVerticalOffset = maxVertOffset + elementHeight;
+                        break;
+                    case TaskbarPosition.Left:
+                        newHorizontalOffset = position.X + 5;
+                        goto case TaskbarPosition.Bottom;
+                    case TaskbarPosition.Right:
+                    case TaskbarPosition.Unknown:
+                    case TaskbarPosition.Bottom:
+                        var minVertOffset = CustomBalloons.Min(x => x.Popup.VerticalOffset);
+                        newVerticalOffset = minVertOffset - elementHeight;
+                        break;
                 }
             }
             else
             {
-                if (taskbarOnTop)
+                switch (taskbarPosition)
                 {
-                    newVerticalOffset = position.Y;
-                }
-                else
-                {
-                    newVerticalOffset = position.Y - 1 - elementHeight;
+                    case TaskbarPosition.Top:
+                        newVerticalOffset = position.Y;
+                        break;
+                    case TaskbarPosition.Left:
+                        newHorizontalOffset = position.X + 5;
+                        goto case TaskbarPosition.Bottom;
+                    case TaskbarPosition.Right:
+                    case TaskbarPosition.Unknown:
+                    case TaskbarPosition.Bottom:
+                        newVerticalOffset = position.Y - 1 - elementHeight;
+                        break;
                 }
             }
 
@@ -278,13 +286,17 @@ namespace Hardcodet.Wpf.TaskbarNotification
             {
                 if (previousOffset != null)
                 {
-                    if (taskbarOnTop)
+                    switch (taskbarPosition)
                     {
-                        newVerticalOffset = previousOffset.Value + elementHeight;
-                    }
-                    else
-                    {
-                        newVerticalOffset = previousOffset.Value - elementHeight;
+                        case TaskbarPosition.Top:
+                            newVerticalOffset = previousOffset.Value + elementHeight;
+                            break;
+                        case TaskbarPosition.Left:
+                        case TaskbarPosition.Right:
+                        case TaskbarPosition.Unknown:
+                        case TaskbarPosition.Bottom:
+                            newVerticalOffset = previousOffset.Value - elementHeight;
+                            break;
                     }
                 }
                 MoveWithAnimation(popup, newVerticalOffset);
@@ -299,7 +311,6 @@ namespace Hardcodet.Wpf.TaskbarNotification
         private void MoveWithAnimation(Popup popup, double newVertical)
         {
             var storyBoard = new Storyboard();
-            var bleh = storyBoard.IsFrozen;
             storyBoard.SetValue(Storyboard.TargetProperty, popup);
             storyBoard.SetValue(Storyboard.TargetPropertyProperty, new PropertyPath("VerticalOffset"));
             storyBoard.Children.Add(new DoubleAnimation(popup.VerticalOffset, newVertical, TimeSpan.FromSeconds(0.25)));
